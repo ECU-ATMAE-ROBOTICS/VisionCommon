@@ -6,6 +6,7 @@ from pytest import raises, warns
 
 # Internal
 from VisionCommon.Viewer import Viewer
+from VisionCommon.src.Vision import Vision
 from VisionCommon.src.exceptions.InvalidCombinationException import (
     InvalidCombinationException,
 )
@@ -66,5 +67,5 @@ def test_CaptureTimeoutSecWarning() -> None:
 def test_Scan() -> None:
     """Test scan() in Vision (Viewer inherited from Vision)"""
     img = cv.imread("test/data/test-qr.png")
-    assert Viewer.scan(img) == "Test"
+    assert Vision.scan(img) == "Test"
     unstub()

@@ -1,6 +1,11 @@
 # Built-in
 from time import time
 from warnings import warn, filterwarnings
+from typing import Optional, Union
+import logging
+
+logging.basicConfig(level=logging.INFO)
+
 
 filterwarnings(
     "once",
@@ -19,14 +24,23 @@ from .src.exceptions.InvalidCombinationException import InvalidCombinationExcept
 
 
 class Viewer(Vision):
+    logger = logging.getLogger(__name__)
+
     def __init__(self, cameraIndex: int = 0) -> None:
+        """
+        Constructor for the Viewer
+
+        Args:
+            cameraIndex (int, optional): The index of the camera to be used
+        """
         self.vid = VideoCapture(cameraIndex)
         pass
 
     def capture(
         self, timeoutSec: int = None, timeoutFrame: int = None
-    ) -> str | InvalidCombinationException:
-        """Turns on the camera and captures input,
+    ) -> Union[str, InvalidCombinationException]:
+        """
+        Turns on the camera and captures input,
         scanning each frame for a QR code
 
         Args:
@@ -38,8 +52,9 @@ class Viewer(Vision):
             InvalidCombinationException: Invalid argument combination passed
         """
 
-        def __capture() -> ndarray | None:
-            """Helper function to capture a single frame from the camera
+        def __capture() -> Optional[ndarray]:
+            """
+            Helper function to capture a single frame from the camera
 
             Returns:
                 ndarray: The NumPy array of the frame
@@ -48,33 +63,39 @@ class Viewer(Vision):
             ret, frame = self.vid.read()
             if ret is True:
                 return frame
-            # TODO Add logging when ret is False
-            return None
+            else:
+                Viewer.logging.warning("Frame capture failed.")
+                return None
 
         if timeoutSec and timeoutFrame:
             raise InvalidCombinationException("Cannot set timeoutSec and timeoutFrame")
 
-        # TODO Reduce redundant code
         if timeoutSec:
             if timeoutSec < 0:
                 raise ValueError("timeoutSec cannot be negative")
+
             warn("Using a busy-wait approach for timeouts can be resource-intensive")
             start = time()
             while (time() - start) < timeoutSec:
                 payload = Viewer.scan(__capture())
                 if payload:
                     return payload
+
+            Viewer.logger.info("No code found.")
             return None
 
         elif timeoutFrame:
             if timeoutFrame < 0:
                 raise ValueError("timeoutFrame cannot be negative")
+
             framesProcessed = 0
             while framesProcessed < timeoutFrame:
                 payload = Viewer.scan(__capture)
                 if payload:
                     return payload
                 framesProcessed += 1
+
+            Viewer.logger.info("No code found.")
             return None
 
         else:
