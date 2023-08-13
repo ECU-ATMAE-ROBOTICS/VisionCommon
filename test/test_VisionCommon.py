@@ -39,6 +39,18 @@ def test_CaptureTimeoutFrame() -> None:
     assert True
 
 
+# TODO
+def test_CaptureTimeoutSecFail() -> None:
+    """Test capture() with optional timeoutSec argument where it times out"""
+    assert True
+
+
+# TODO
+def test_CaptureTimeoutFrameFail() -> None:
+    """Test capture() with optional timeoutFrame argument where it times out"""
+    assert True
+
+
 def test_CaptureTimeoutFrameAndSec() -> None:
     """Test capture() with invalid combination of timeoutSec and timeoutFrame"""
     camera = Viewer()
