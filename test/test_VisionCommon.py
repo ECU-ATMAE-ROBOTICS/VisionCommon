@@ -18,62 +18,62 @@ def test_Viewer():
     assert True
 
 
-def test_Capture() -> None:
-    """Test capture() in Viewer"""
+def test_CaptureCode() -> None:
+    """Test captureCode() in Viewer"""
     response = mock("Test")
-    when(Viewer).capture().thenReturn(response)
+    when(Viewer).captureCode().thenReturn(response)
 
-    assert Viewer.capture() == response
+    assert Viewer.captureCode() == response
     unstub()
 
 
 # TODO
-def test_CaptureTimeoutSec() -> None:
-    """Test capture() with optional timeoutSec argument"""
+def test_CaptureCodeTimeoutSec() -> None:
+    """Test captureCode() with optional timeoutSec argument"""
     assert True
 
 
 # TODO
-def test_CaptureTimeoutFrame() -> None:
-    """Test capture() with optional timeoutFrame argument"""
+def test_CaptureCodeTimeoutFrame() -> None:
+    """Test captureCode() with optional timeoutFrame argument"""
     assert True
 
 
 # TODO
-def test_CaptureTimeoutSecFail() -> None:
-    """Test capture() with optional timeoutSec argument where it times out"""
+def test_CaptureCodeTimeoutSecFail() -> None:
+    """Test captureCode() with optional timeoutSec argument where it times out"""
     assert True
 
 
 # TODO
-def test_CaptureTimeoutFrameFail() -> None:
-    """Test capture() with optional timeoutFrame argument where it times out"""
+def test_CaptureCodeTimeoutFrameFail() -> None:
+    """Test captureCode() with optional timeoutFrame argument where it times out"""
     assert True
 
 
-def test_CaptureTimeoutFrameAndSec() -> None:
-    """Test capture() with invalid combination of timeoutSec and timeoutFrame"""
+def test_CaptureCodeTimeoutFrameAndSec() -> None:
+    """Test captureCode() with invalid combination of timeoutSec and timeoutFrame"""
     camera = Viewer()
     with raises(InvalidCombinationException):
-        camera.capture(timeoutSec=1, timeoutFrame=1)
+        camera.captureCode(timeoutSec=1, timeoutFrame=1)
 
 
-def test_CaptureNegativeTimeout() -> None:
-    """Test capture() with negative input as timeoutSec and timeoutFrame"""
+def test_CaptureCodeNegativeTimeout() -> None:
+    """Test captureCode() with negative input as timeoutSec and timeoutFrame"""
     camera = Viewer()
     with raises(ValueError):
-        camera.capture(timeoutSec=-1)
+        camera.captureCode(timeoutSec=-1)
     with raises(ValueError):
-        camera.capture(timeoutFrame=-1)
+        camera.captureCode(timeoutFrame=-1)
 
 
-def test_CaptureTimeoutSecWarning() -> None:
-    """Test capture() with timeoutSec argument causes warning"""
+def test_CaptureCodeTimeoutSecWarning() -> None:
+    """Test captureCode() with timeoutSec argument causes warning"""
     camera = Viewer()
     with warns(
         match="Using a busy-wait approach for timeouts can be resource-intensive"
     ):
-        camera.capture(timeoutSec=1)
+        camera.captureCode(timeoutSec=1)
 
 
 def test_Scan() -> None:

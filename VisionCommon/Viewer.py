@@ -1,7 +1,7 @@
 # Built-in
 from time import time
 from warnings import warn, filterwarnings
-from typing import Optional, Union
+from typing import Optional, Union, Iterable
 import logging
 
 logging.basicConfig(level=logging.INFO)
@@ -15,6 +15,7 @@ filterwarnings(
 # Third Party
 from cv2 import VideoCapture
 from numpy import ndarray
+from pyzbar.pyzbar import ZBarSymbol
 
 # Internal
 from .src.Vision import Vision
@@ -36,8 +37,11 @@ class Viewer(Vision):
         self.vid = VideoCapture(cameraIndex)
         pass
 
-    def capture(
-        self, timeoutSec: int = None, timeoutFrame: int = None
+    def captureCode(
+        self,
+        timeoutSec: int = None,
+        timeoutFrame: int = None,
+        codeTypes: Iterable[ZBarSymbol] = None,
     ) -> Union[str, InvalidCombinationException]:
         """
         Turns on the camera and captures input,
@@ -46,6 +50,8 @@ class Viewer(Vision):
         Args:
             timeoutSec (int, optional): Maximum time to wait in seconds. Defaults to None.
             timeoutFrame (int, optional): Maximum number of frames to scan. Defaults to None.
+            [From Iter Docs] (iter(ZBarSymbol), optional): the symbol types to decode; if `None`, uses
+            `zbar`'s default behaviour, which is to decode all symbol types.
 
         Returns:
             str: Value contained in a QR code
@@ -77,7 +83,7 @@ class Viewer(Vision):
             warn("Using a busy-wait approach for timeouts can be resource-intensive")
             start = time()
             while (time() - start) < timeoutSec:
-                payload = Viewer.scan(__capture())
+                payload = Viewer.scan(__capture(), codeTypes)
                 if payload:
                     return payload
 
@@ -90,7 +96,7 @@ class Viewer(Vision):
 
             framesProcessed = 0
             while framesProcessed < timeoutFrame:
-                payload = Viewer.scan(__capture)
+                payload = Viewer.scan(__capture(), codeTypes)
                 if payload:
                     return payload
                 framesProcessed += 1
@@ -100,6 +106,6 @@ class Viewer(Vision):
 
         else:
             while True:
-                payload = Viewer.scan(__capture)
+                payload = Viewer.scan(__capture(), codeTypes)
                 if payload:
                     return payload
