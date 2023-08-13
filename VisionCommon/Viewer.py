@@ -4,7 +4,12 @@ from warnings import warn, filterwarnings
 from typing import Optional, Union, Iterable
 import logging
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    filename="VisionCommon/log/logs.log",
+    filemode="a",
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
 
 
 filterwarnings(
