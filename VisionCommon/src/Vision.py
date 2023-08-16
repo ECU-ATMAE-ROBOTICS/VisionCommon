@@ -2,14 +2,6 @@
 from typing import Optional, Iterable
 import logging
 
-logging.basicConfig(
-    level=logging.INFO,
-    filename="VisionCommon/log/logs.log",
-    filemode="a",
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-)
-
-
 # Third Party
 from pyzbar.pyzbar import (  # Install the DLLS: https://pypi.org/project/pyzbar/
     decode,
