@@ -1,6 +1,5 @@
 coverage==7.2.7
 iniconfig==2.0.0
-mockito==1.4.0
 numpy==1.25.2
 opencv-python==4.8.0.76
 packaging==23.1
