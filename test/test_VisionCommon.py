@@ -1,87 +1,56 @@
+# Built-in
 import unittest
-from unittest.mock import patch
-import cv2 as cv
+from unittest.mock import Mock, patch
+import asyncio
 
+# Internal
 from VisionCommon.Viewer import Viewer
-from VisionCommon.src.Vision import Vision
-from VisionCommon.src.exceptions.InvalidCombinationException import (
-    InvalidCombinationException,
-)
 
 
-class TestViewer(unittest.TestCase):
-    def test_Viewer(self):
-        """Test Viewer constructor"""
-        self.assertTrue(True)
+class TestViewer(unittest.IsolatedAsyncioTestCase):
+    async def testCaptureFrameSuccess(self):
+        viewer = Viewer(cameraIndex=0)
+        viewer.vid = Mock()
+        viewer.vid.read.return_value = (True, "mocked_frame")
+        result = await viewer.captureFrame()
+        self.assertEqual(result, "mocked_frame")
 
-    @patch("VisionCommon.Viewer.Viewer.captureCode")
-    def test_CaptureCode(self, mock_capture_code):
-        """Test captureCode() in Viewer"""
-        response = "Test"
-        mock_capture_code.return_value = response
+    async def testCaptureFrameFailure(self):
+        viewer = Viewer(cameraIndex=0)
+        viewer.vid = Mock()
+        viewer.vid.read.return_value = (False, None)
+        result = await viewer.captureFrame()
+        self.assertIsNone(result)
 
-        self.assertEqual(Viewer.captureCode(), response)
+    async def testScanWithCode(self):
+        viewer = Viewer(cameraIndex=0)
+        decode_result = [Mock(data=Mock(decode=Mock(return_value="decoded_data")))]
+        with patch("VisionCommon.Viewer.decode", return_value=decode_result):
+            result = await viewer.scan("mocked_frame")
+        self.assertEqual(result, "decoded_data")
 
-    @patch("VisionCommon.Viewer.Viewer.captureCode")
-    def test_CaptureCodeTimeoutSec(self, mock_capture_code):
-        """Test captureCode() with optional timeoutSec argument"""
-        response = "Test"
-        mock_capture_code.return_value = response
+    async def testScanWithoutCode(self):
+        viewer = Viewer(cameraIndex=0)
+        with patch("VisionCommon.Viewer.decode", return_value=[]):
+            result = await viewer.scan("mocked_frame")
+        self.assertIsNone(result)
 
-        self.assertEqual(Viewer.captureCode(timeoutSec=5), response)
+    #! Failiing
+    async def testCaptureCodeTimeoutSec(self):
+        async def mockCaptureFrame():
+            await asyncio.sleep(0.1)
+            return "mocked_frame"
 
-    @patch("VisionCommon.Viewer.Viewer.captureCode")
-    def test_CaptureCodeTimeoutFrame(self, mock_capture_code):
-        """Test captureCode() with optional timeoutFrame argument"""
-        response = "Test"
-        mock_capture_code.return_value = response
+        viewer = Viewer(cameraIndex=0)
+        viewer.asyncCaptureFrame = mockCaptureFrame
 
-        self.assertEqual(Viewer.captureCode(timeoutFrame=10), response)
+        await viewer.captureCode(timeoutSec=1)  # Await the asynchronous operation
 
-    @patch("VisionCommon.Viewer.Viewer.captureCode")
-    def test_CaptureCodeTimeoutSecFail(self, mock_capture_code):
-        """Test captureCode() with optional timeoutSec argument where it times out"""
-        mock_capture_code.return_value = None
+        # Await the event loop to give time for async operations to complete
+        await asyncio.sleep(1.5)
 
-        self.assertIsNone(Viewer.captureCode(timeoutSec=1))
-
-    @patch("VisionCommon.Viewer.Viewer.captureCode")
-    def test_CaptureCodeTimeoutFrameFail(self, mock_capture_code):
-        """Test captureCode() with optional timeoutFrame argument where it times out"""
-        mock_capture_code.return_value = None
-
-        self.assertIsNone(Viewer.captureCode(timeoutFrame=5))
-
-    def test_CaptureCodeTimeoutFrameAndSec(self):
-        """Test captureCode() with invalid combination of timeoutSec and timeoutFrame"""
-        camera = Viewer()
-        with self.assertRaises(InvalidCombinationException):
-            camera.captureCode(timeoutSec=1, timeoutFrame=1)
-
-    def test_CaptureCodeNegativeTimeout(self):
-        """Test captureCode() with negative input as timeoutSec and timeoutFrame"""
-        camera = Viewer()
-        with self.assertRaises(ValueError):
-            camera.captureCode(timeoutSec=-1)
-        with self.assertRaises(ValueError):
-            camera.captureCode(timeoutFrame=-1)
-
-    def test_CaptureCodeTimeoutSecWarning(self):
-        """Test captureCode() with timeoutSec argument causes warning"""
-        camera = Viewer()
-        with self.assertWarns(UserWarning):
-            camera.captureCode(timeoutSec=1)
-
-
-class TestVision(unittest.TestCase):
-    @patch("VisionCommon.src.Vision.Vision.scan")
-    def test_Scan(self, mock_scan):
-        """Test scan() in Vision (Viewer inherited from Vision)"""
-        img = cv.imread("test/data/test-qr.png")
-        response = "Test"
-        mock_scan.return_value = response
-
-        self.assertEqual(Vision.scan(img), response)
+        self.assertEqual(viewer.eventQueue.qsize(), 2)
+        self.assertEqual(viewer.eventQueue.unfinished_tasks, 0)
 
 
 if __name__ == "__main__":
