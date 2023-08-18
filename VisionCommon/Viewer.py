@@ -48,7 +48,7 @@ class Viewer:
             match event.eventType:
                 case "capture-code":
                     await self.captureCode(event.data)
-                case "receive":
+                case "capture-frame":
                     await self.captureFrame()
                 case default:
                     return
@@ -127,10 +127,13 @@ class Viewer:
             Union[str, InvalidCombinationException]: The decoded content of the code if found,
             or an InvalidCombinationException if constraints are invalid.
         """
-        process_frames_task = asyncio.create_task(self.processFrames(codeTypes))
+        asyncio.create_task(self.processFrames(codeTypes))
 
         if timeoutSec and timeoutFrame:
             raise InvalidCombinationException("Cannot set timeoutSec and timeoutFrame")
+
+        if not timeoutSec and not timeoutFrame:
+            raise InvalidCombinationException("One timeout must be set")
 
         if timeoutSec:
             if timeoutSec < 0:
@@ -161,5 +164,3 @@ class Viewer:
             await self.eventQueue.join()  # Wait for all frames to be processed
             Viewer.logger.info("No code found.")
             return None
-
-        await process_frames_task
