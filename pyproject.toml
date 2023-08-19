@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "my_package"
+authors = [{ name = "Jarred", email = "" }]
+description = "Common Package for robotic computer vision"
+readme = "README.md"
+requires-python = ">=3.11"
+keywords = []
+license = { text = "GPL-3.0" }
+classifiers = ["Programming Language :: Python :: 3"]
+dependencies = [
+    "iniconfig",
+    "numpy",
+    "opencv-python",
+    "packaging",
+    "pluggy",
+    "pyzbar",
+]
+dynamic = ["version"]
