@@ -3,7 +3,8 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "my_package"
+name = "VisionCommon"
+version = "0.0.1"
 authors = [{ name = "Jarred" }]
 description = "Common Package for robotic computer vision"
 readme = "README.md"
@@ -19,4 +20,3 @@ dependencies = [
     "pluggy",
     "pyzbar",
 ]
-dynamic = ["version"]
