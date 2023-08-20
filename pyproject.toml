@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "VisionCommon"
-version = "0.0.1"
+version = "1.0.0"
 authors = [{ name = "Jarred" }]
 description = "Common Package for robotic computer vision"
 readme = "README.md"
