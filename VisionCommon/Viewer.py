@@ -1,6 +1,6 @@
 # Built-in
 from time import time
-from warnings import warn, filterwarnings
+from warnings import warn
 from typing import Optional, Union, Iterable
 import logging
 import asyncio
@@ -18,15 +18,6 @@ from .src.exceptions.InvalidCombinationException import InvalidCombinationExcept
 
 
 class Viewer:
-    """
-    An event-driven code reader using asyncio.
-
-    Attributes:
-        logger (logging.Logger): The logger instance for this class.
-        vid (VideoCapture): The video capture instance.
-        eventQueue (asyncio.Queue): The asyncio queue to store captured frames.
-    """
-
     logger = logging.getLogger(__name__)
 
     def __init__(self, cameraIndex: int = 0) -> None:
@@ -37,21 +28,39 @@ class Viewer:
             cameraIndex (int, optional): The index of the camera to be used.
         """
         self.vid = VideoCapture(cameraIndex)
-        self.eventQueue = asyncio.Queue()
 
-    async def listenForEvents(self):
+    async def captureCode(
+        self,
+        timeoutSec: int = None,
+        timeoutFrame: int = None,
+        codeTypes: Iterable[ZBarSymbol] = None,
+    ) -> Optional[str]:
         """
-        Listen for events and process them.
+        Asynchronously captures codes from the camera based on the given timeout constraints.
+
+        Args:
+            timeoutSec (int, optional): Maximum time to wait in seconds.
+            timeoutFrame (int, optional): Maximum number of frames to scan.
+            codeTypes (Iterable[ZBarSymbol], optional): The symbol types to decode.
+
+        Returns:
+            Optional[str]: The decoded content of the code if found, or None if no code is detected.
         """
-        while True:
-            event = await self.eventQueue.get()
-            match event.eventType:
-                case "capture-code":
-                    await self.captureCode(event.data)
-                case "capture-frame":
-                    await self.captureFrame()
-                case default:
-                    return
+        if timeoutSec is not None and timeoutFrame is not None:
+            raise InvalidCombinationException("Cannot set timeoutSec and timeoutFrame")
+
+        if timeoutSec is None and timeoutFrame is None:
+            raise InvalidCombinationException("One timeout must be set")
+
+        if timeoutSec is not None:
+            if timeoutSec < 0:
+                raise ValueError("timeoutSec cannot be negative")
+            return await self._captureCodeByTimeoutSec(timeoutSec)
+
+        elif timeoutFrame is not None:
+            if timeoutFrame < 0:
+                raise ValueError("timeoutFrame cannot be negative")
+            return await self._captureCodeByTimeoutFrame(timeoutFrame)
 
     async def captureFrame(self) -> Optional[ndarray]:
         """
@@ -67,7 +76,7 @@ class Viewer:
             Viewer.logger.warning("Frame capture failed.")
             return None
 
-    async def scan(
+    async def _scan(
         self, frame: ndarray, codeTypes: Iterable[ZBarSymbol] = None
     ) -> Optional[str]:
         """
@@ -76,7 +85,7 @@ class Viewer:
         Args:
             frame (ndarray): A NumPy array representing the image frame containing a code.
             codeTypes (Iterable[ZBarSymbol], optional): The symbol types to decode;
-            if None, uses ZBar's default behavior.
+                if None, uses ZBar's default behavior.
 
         Returns:
             Optional[str]: The decoded content of the code if found, or None if no code is detected.
@@ -90,77 +99,50 @@ class Viewer:
             Viewer.logger.error("An error occurred during code decoding: %s", e)
             return None
 
-        decoded_data = value[0].data.decode("utf-8")
-        Viewer.logger.info("Code detected and decoded: %s", decoded_data)
-        return decoded_data
+        decodedData = value[0].data.decode("utf-8")
+        Viewer.logger.info("Code detected and decoded: %s", decodedData)
+        return decodedData
 
-    async def processFrames(
-        self,
-        codeTypes: Iterable[ZBarSymbol] = None,
-    ):
+    async def _captureCodeByTimeoutSec(self, timeoutSec: int) -> Optional[str]:
         """
-        Asynchronously processes frames from the event queue.
-        """
-        while True:
-            frame = await self.eventQueue.get()
-            payload = await self.scan(frame, codeTypes)
-            if payload:
-                print("Payload:", payload)
-                break
-            self.eventQueue.task_done()
-
-    async def captureCode(
-        self,
-        timeoutSec: int = None,
-        timeoutFrame: int = None,
-        codeTypes: Iterable[ZBarSymbol] = None,
-    ) -> Union[str, InvalidCombinationException]:
-        """
-        Asynchronously captures codes from the camera based on the given timeout constraints.
+        Asynchronously captures codes from the camera based on the given time constraint.
 
         Args:
-            timeoutSec (int, optional): Maximum time to wait in seconds.
-            timeoutFrame (int, optional): Maximum number of frames to scan.
-            codeTypes (Iterable[ZBarSymbol], optional): The symbol types to decode.
+            timeoutSec (int): Maximum time to wait in seconds.
 
         Returns:
-            Union[str, InvalidCombinationException]: The decoded content of the code if found,
-            or an InvalidCombinationException if constraints are invalid.
+            Optional[str]: The decoded content of the code if found, or None if no code is detected.
         """
-        asyncio.create_task(self.processFrames(codeTypes))
+        warn("Using a busy-wait approach for timeouts can be resource-intensive")
+        startTime = time()
+        while (time() - startTime) < timeoutSec:
+            frame = await self.captureFrame()
+            if frame.any():
+                decodedData = await self._scan(frame)
+                if decodedData:
+                    Viewer.logger.info("Payload: %s", decodedData)
+                    return decodedData
+        Viewer.logger.info("No code found.")
+        return None
 
-        if timeoutSec and timeoutFrame:
-            raise InvalidCombinationException("Cannot set timeoutSec and timeoutFrame")
+    async def _captureCodeByTimeoutFrame(self, timeoutFrame: int) -> Optional[str]:
+        """
+        Asynchronously captures codes from the camera based on the given frame count constraint.
 
-        if not timeoutSec and not timeoutFrame:
-            raise InvalidCombinationException("One timeout must be set")
+        Args:
+            timeoutFrame (int): Maximum number of frames to scan.
 
-        if timeoutSec:
-            if timeoutSec < 0:
-                raise ValueError("timeoutSec cannot be negative")
-
-            warn("Using a busy-wait approach for timeouts can be resource-intensive")
-            startTime = time()
-            while (time() - startTime) < timeoutSec:
-                frame = await self.captureFrame()
-                if frame.any():
-                    await self.eventQueue.put(frame)
-
-            await self.eventQueue.join()
-            Viewer.logger.info("No code found.")
-            return None
-
-        elif timeoutFrame:
-            if timeoutFrame < 0:
-                raise ValueError("timeoutFrame cannot be negative")
-
-            framesProcessed = 0
-            while framesProcessed < timeoutFrame:
-                frame = await self.captureFrame()
-                if frame.any():
-                    await self.eventQueue.put(frame)
-                framesProcessed += 1
-
-            await self.eventQueue.join()  # Wait for all frames to be processed
-            Viewer.logger.info("No code found.")
-            return None
+        Returns:
+            Optional[str]: The decoded content of the code if found, or None if no code is detected.
+        """
+        framesProcessed = 0
+        while framesProcessed < timeoutFrame:
+            frame = await self.captureFrame()
+            if frame.any():
+                decodedData = await self._scan(frame)
+                if decodedData:
+                    Viewer.logger.info("Payload: %s", decodedData)
+                    return decodedData
+            framesProcessed += 1
+        Viewer.logger.info("No code found.")
+        return None
