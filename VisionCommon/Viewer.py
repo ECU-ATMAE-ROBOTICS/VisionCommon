@@ -1,9 +1,7 @@
 # Built-in
 from time import time
 from warnings import warn
-from typing import Optional, Union, Iterable
-import logging
-import asyncio
+from typing import Optional, Iterable
 
 # Third Party
 from cv2 import VideoCapture
@@ -18,8 +16,6 @@ from .src.exceptions.InvalidCombinationException import InvalidCombinationExcept
 
 
 class Viewer:
-    logger = logging.getLogger(__name__)
-
     def __init__(self, cameraIndex: int = 0) -> None:
         """
         Constructor for the Viewer class.
@@ -73,7 +69,6 @@ class Viewer:
         if ret:
             return frame
         else:
-            Viewer.logger.warning("Frame capture failed.")
             return None
 
     async def _scan(
@@ -93,14 +88,11 @@ class Viewer:
         try:
             value = decode(frame, codeTypes)
             if not value:
-                Viewer.logger.info("No code detected in the frame.")
                 return None
         except Exception as e:
-            Viewer.logger.error("An error occurred during code decoding: %s", e)
-            return None
+            raise e
 
         decodedData = value[0].data.decode("utf-8")
-        Viewer.logger.info("Code detected and decoded: %s", decodedData)
         return decodedData
 
     async def _captureCodeByTimeoutSec(self, timeoutSec: int) -> Optional[str]:
@@ -120,9 +112,7 @@ class Viewer:
             if frame.any():
                 decodedData = await self._scan(frame)
                 if decodedData:
-                    Viewer.logger.info("Payload: %s", decodedData)
                     return decodedData
-        Viewer.logger.info("No code found.")
         return None
 
     async def _captureCodeByTimeoutFrame(self, timeoutFrame: int) -> Optional[str]:
@@ -141,8 +131,6 @@ class Viewer:
             if frame.any():
                 decodedData = await self._scan(frame)
                 if decodedData:
-                    Viewer.logger.info("Payload: %s", decodedData)
                     return decodedData
             framesProcessed += 1
-        Viewer.logger.info("No code found.")
         return None
