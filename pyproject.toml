@@ -4,18 +4,11 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "VisionCommon"
-version = "1.0.1"
+version = "1.2.0"
 authors = [{ name = "Jarred" }]
-description = "Common Package for robotic computer vision"
+description = "Common package for robotic computer vision"
 readme = "README.md"
 keywords = []
 license = { text = "GPL-3.0" }
 classifiers = ["Programming Language :: Python :: 3"]
-dependencies = [
-    "iniconfig",
-    "numpy",
-    "opencv-python",
-    "packaging",
-    "pluggy",
-    "pyzbar",
-]
+dependencies = ["numpy", "opencv-python", "pyzbar"]
