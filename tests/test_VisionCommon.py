@@ -8,11 +8,6 @@ from VisionCommon.exceptions.InvalidCombinationException import (
 
 
 class TestViewer:
-    def testInvalidCombinationException(self):
-        viewer = Viewer()
-        with pytest.raises(InvalidCombinationException):
-            viewer.captureCode(timeoutSec=5, timeoutFrame=10)
-
     def testNoTimeoutInvalidCombinationException(self):
         viewer = Viewer()
         with pytest.raises(InvalidCombinationException):
@@ -35,7 +30,17 @@ class TestViewer:
 
     def testCaptureCodeByTimeoutFrame(self):
         viewer = Viewer()
-        code = viewer.captureCode(timeoutFrame=10)
+        code = viewer.captureCode(timeoutFrame=5)
+        assert code is None or isinstance(code, str)
+
+    def testCaptureCodeByTimeoutBothFrameFirst(self):
+        viewer = Viewer()
+        code = viewer.captureCode(timeoutFrame=5, timeoutSec=60)
+        assert code is None or isinstance(code, str)
+
+    def testCaptureCodeByTimeoutBothSecFirst(self):
+        viewer = Viewer()
+        code = viewer.captureCode(timeoutFrame=50, timeoutSec=1)
         assert code is None or isinstance(code, str)
 
     def testCaptureFrame(self):

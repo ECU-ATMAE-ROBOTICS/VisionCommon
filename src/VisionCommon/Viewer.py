@@ -43,20 +43,24 @@ class Viewer:
         Returns:
             Optional[str]: The decoded content of the code if found, or None if no code is detected.
         """
-        if timeoutSec is not None and timeoutFrame is not None:
-            raise InvalidCombinationException("Cannot set timeoutSec and timeoutFrame")
+
+        if (
+            (timeoutSec is not None)
+            and (timeoutSec < 0)
+            or ((timeoutFrame is not None) and (timeoutFrame < 0))
+        ):
+            raise ValueError("Timeout cannot be negative")
 
         if timeoutSec is None and timeoutFrame is None:
             raise InvalidCombinationException("One timeout must be set")
 
-        if timeoutSec is not None:
-            if timeoutSec < 0:
-                raise ValueError("timeoutSec cannot be negative")
+        if timeoutSec is not None and timeoutFrame is not None:
+            return self._captureCodeByTimeoutBoth(timeoutSec, timeoutFrame, codeTypes)
+
+        elif timeoutSec is not None:
             return self._captureCodeByTimeoutSec(timeoutSec, codeTypes)
 
         elif timeoutFrame is not None:
-            if timeoutFrame < 0:
-                raise ValueError("timeoutFrame cannot be negative")
             return self._captureCodeByTimeoutFrame(timeoutFrame, codeTypes)
 
     def captureFrame(self) -> Optional[ndarray]:
@@ -132,6 +136,35 @@ class Viewer:
         """
         framesProcessed = 0
         while framesProcessed < timeoutFrame:
+            frame = self.captureFrame()
+            if frame.any():
+                decodedData = self._scan(frame, codeTypes)
+                if decodedData:
+                    return decodedData
+            framesProcessed += 1
+        return None
+
+    def _captureCodeByTimeoutBoth(
+        self, timeoutSec: int, timeoutFrame: int, codeTypes: Iterable[ZBarSymbol] = None
+    ) -> Optional[str]:
+        """
+        Capture and decode data within specified time and frame limits.
+
+        Args:
+            timeoutSec (int): Time limit in seconds for capturing and decoding data.
+            timeoutFrame (int): Frame limit for capturing and decoding data.
+            codeTypes (Iterable[ZBarSymbol], optional): Iterable of ZBarSymbol types to consider during decoding.
+
+        Returns:
+            Optional[str]: Decoded data as a string if found within the specified limits, otherwise None.
+
+        Warnings:
+            This method uses a busy-wait approach for timeouts, which can be resource-intensive.
+        """
+        warn("Using a busy-wait approach for timeouts can be resource-intensive")
+        startTime = time()
+        framesProcessed = 0
+        while (time() - startTime < timeoutSec) and (framesProcessed < timeoutFrame):
             frame = self.captureFrame()
             if frame.any():
                 decodedData = self._scan(frame, codeTypes)
