@@ -11,8 +11,9 @@ from pyzbar.pyzbar import (  # Install the DLLS: https://pypi.org/project/pyzbar
     ZBarSymbol,
 )
 
+
 # Exceptions
-from .src.exceptions.InvalidCombinationException import InvalidCombinationException
+from .exceptions.InvalidCombinationException import InvalidCombinationException
 
 
 class Viewer:
@@ -25,14 +26,14 @@ class Viewer:
         """
         self.vid = VideoCapture(cameraIndex)
 
-    async def captureCode(
+    def captureCode(
         self,
         timeoutSec: int = None,
         timeoutFrame: int = None,
         codeTypes: Iterable[ZBarSymbol] = None,
     ) -> Optional[str]:
         """
-        Asynchronously captures codes from the camera based on the given timeout constraints.
+        Capture codes from the camera based on the given timeout constraints.
 
         Args:
             timeoutSec (int, optional): Maximum time to wait in seconds.
@@ -51,16 +52,16 @@ class Viewer:
         if timeoutSec is not None:
             if timeoutSec < 0:
                 raise ValueError("timeoutSec cannot be negative")
-            return await self._captureCodeByTimeoutSec(timeoutSec)
+            return self._captureCodeByTimeoutSec(timeoutSec, codeTypes)
 
         elif timeoutFrame is not None:
             if timeoutFrame < 0:
                 raise ValueError("timeoutFrame cannot be negative")
-            return await self._captureCodeByTimeoutFrame(timeoutFrame)
+            return self._captureCodeByTimeoutFrame(timeoutFrame, codeTypes)
 
-    async def captureFrame(self) -> Optional[ndarray]:
+    def captureFrame(self) -> Optional[ndarray]:
         """
-        Asynchronously captures a single frame from the camera.
+        Capture a single frame from the camera.
 
         Returns:
             Optional[ndarray]: The NumPy array of the captured frame, or None if capture was not successful.
@@ -71,11 +72,11 @@ class Viewer:
         else:
             return None
 
-    async def _scan(
+    def _scan(
         self, frame: ndarray, codeTypes: Iterable[ZBarSymbol] = None
     ) -> Optional[str]:
         """
-        Asynchronously scans a code from an image frame.
+        Scan a code from an image frame.
 
         Args:
             frame (ndarray): A NumPy array representing the image frame containing a code.
@@ -95,9 +96,11 @@ class Viewer:
         decodedData = value[0].data.decode("utf-8")
         return decodedData
 
-    async def _captureCodeByTimeoutSec(self, timeoutSec: int) -> Optional[str]:
+    def _captureCodeByTimeoutSec(
+        self, timeoutSec: int, codeTypes: Iterable[ZBarSymbol] = None
+    ) -> Optional[str]:
         """
-        Asynchronously captures codes from the camera based on the given time constraint.
+        Capture codes from the camera based on the given time constraint.
 
         Args:
             timeoutSec (int): Maximum time to wait in seconds.
@@ -108,16 +111,18 @@ class Viewer:
         warn("Using a busy-wait approach for timeouts can be resource-intensive")
         startTime = time()
         while (time() - startTime) < timeoutSec:
-            frame = await self.captureFrame()
+            frame = self.captureFrame()
             if frame.any():
-                decodedData = await self._scan(frame)
+                decodedData = self._scan(frame, codeTypes)
                 if decodedData:
                     return decodedData
         return None
 
-    async def _captureCodeByTimeoutFrame(self, timeoutFrame: int) -> Optional[str]:
+    def _captureCodeByTimeoutFrame(
+        self, timeoutFrame: int, codeTypes: Iterable[ZBarSymbol] = None
+    ) -> Optional[str]:
         """
-        Asynchronously captures codes from the camera based on the given frame count constraint.
+        Capture codes from the camera based on the given frame count constraint.
 
         Args:
             timeoutFrame (int): Maximum number of frames to scan.
@@ -127,9 +132,9 @@ class Viewer:
         """
         framesProcessed = 0
         while framesProcessed < timeoutFrame:
-            frame = await self.captureFrame()
+            frame = self.captureFrame()
             if frame.any():
-                decodedData = await self._scan(frame)
+                decodedData = self._scan(frame, codeTypes)
                 if decodedData:
                     return decodedData
             framesProcessed += 1
