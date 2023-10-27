@@ -14,7 +14,7 @@ To install this package, use the commands `pip install git+https://github.com/EC
 ## Usage
 ### Capture Code With Timeout functionality
 - Use timeoutFrame to timeout after n frames instead of n seconds
-- timeoutFrame and timeoutSec cannot be used together, and both must be positive
+- Using both will simply timeout whichever one finishes first
 ```python
 viewer = Viewer(cameraIndex=0)
 
