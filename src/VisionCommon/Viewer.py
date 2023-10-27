@@ -44,10 +44,12 @@ class Viewer:
             Optional[str]: The decoded content of the code if found, or None if no code is detected.
         """
 
-        if ((timeoutSec is not None) and (timeoutSec < 0)) or (
-            (timeoutFrame is not None) and (timeoutFrame < 0)
+        if (
+            (timeoutSec is not None)
+            and (timeoutSec < 0)
+            or ((timeoutFrame is not None) and (timeoutFrame < 0))
         ):
-            raise ValueError("Timeout cannot be negative.")
+            raise ValueError("Timeout cannot be negative")
 
         if timeoutSec is None and timeoutFrame is None:
             raise InvalidCombinationException("One timeout must be set")
@@ -163,7 +165,7 @@ class Viewer:
         startTime = time()
         framesProcessed = 0
         while (time() - startTime < timeoutSec) and (framesProcessed < timeoutFrame):
-            frame = self.captureCode()
+            frame = self.captureFrame()
             if frame.any():
                 decodedData = self._scan(frame, codeTypes)
                 if decodedData:

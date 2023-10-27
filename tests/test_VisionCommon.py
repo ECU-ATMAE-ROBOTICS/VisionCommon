@@ -28,9 +28,9 @@ class TestViewer:
         code = viewer.captureCode(timeoutSec=5)
         assert code is None or isinstance(code, str)
 
-    def testCaptureCodeByTimeoutSec(self):
+    def testCaptureCodeByTimeoutFrame(self):
         viewer = Viewer()
-        code = viewer.captureCode(timeoutSec=5)
+        code = viewer.captureCode(timeoutFrame=5)
         assert code is None or isinstance(code, str)
 
     def testCaptureCodeByTimeoutBothFrameFirst(self):
