@@ -57,3 +57,6 @@ For major changes, please open an issue first to discuss what you would like to 
 ## License
 This project is licensed under the GPL-3 License - see the [LICENSE](LICENSE) file for details.
 
+## Docs
+![Viwer Class Chart](docs/Viewer/Viewer.png)
+
