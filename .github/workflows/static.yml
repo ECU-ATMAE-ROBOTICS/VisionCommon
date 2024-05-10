@@ -1,0 +1,57 @@
+name: Documentation
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "docs/source/**"
+      - "src/VisionCommon/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip3 install -r src/requirements.txt sphinx sphinx-rtd-theme
+      - name: Build Sphinx Documentation
+        run: |
+          mkdir -p build/docs/sphinx/html
+          sphinx-build -b html docs/source/ build/docs/sphinx/html
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: List output directory
+        run: ls -l build/docs/sphinx
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: "build/docs/sphinx/html"
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
