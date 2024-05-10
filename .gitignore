@@ -162,5 +162,4 @@ cython_debug/
 .vscode
 .DS_Store
 
-config.py
-config-3.py
+build/
