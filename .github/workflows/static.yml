@@ -44,9 +44,6 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
-      - name: List output directory
-        run: ls -l build/docs/sphinx
-
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:

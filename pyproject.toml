@@ -11,7 +11,7 @@ readme = "README.md"
 keywords = []
 license = { text = "GPL-3.0" }
 classifiers = ["Programming Language :: Python :: 3"]
-dependencies = ["numpy", "opencv-python", "pyzbar"]
+dependencies = ["opencv-python", "pyzbar"]
 
 [tool.black]
 line-length = 88

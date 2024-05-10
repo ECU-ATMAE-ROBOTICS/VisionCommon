@@ -5,4 +5,4 @@ Welcome to VisionCommon's documentation!
    :maxdepth: 2
 
 
-   src/vision
+   src/viewer
