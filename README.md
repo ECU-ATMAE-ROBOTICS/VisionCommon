@@ -1,62 +1,69 @@
 # Vision Common
+
+![build](https://github.com/ECU-ATMAE-ROBOTICS/VisionCommon/actions/workflows/ci.yml/badge.svg)
+![docs](https://github.com/ECU-ATMAE-ROBOTICS/VisionCommon/actions/workflows/static.yml/badge.svg)
+[![linting: pylint](https://img.shields.io/badge/linting-pylint-yellowgreen)](https://github.com/pylint-dev/pylint)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+
 Common package for visual processing. Contains classes and methods for capturing frames from a camera, and reading codes from them. The goal being a user-friendly way to process images for non-technical users.
 
 ## Table of Contents
+
 - [Installation](#installation)
-- [Usage](#usage)
 - [Contributing](#contributing)
 - [License](#license)
 
 ## Installation
+
 To install this package, use the commands `pip install git+https://github.com/ECU-ATMAE-ROBOTICS/VisionCommon`
 
-
-## Usage
-### Capture Code With Timeout functionality
-- Use timeoutFrame to timeout after n frames instead of n seconds
-- Using both will simply timeout whichever one finishes first
-```python
-viewer = Viewer(cameraIndex=0)
-
-decoded_content = viewer.captureCode(timeoutSec=10)
-if decoded_content:
-    print("Decoded content:", decoded_content)
-else:
-    print("No code detected within the specified time.")
-```
-
-### Capture A Single Frame
-```python
-import cv2
-
-viewer = Viewer(cameraIndex=0)
-
-frame = viewer.captureFrame()
-if frame is not None:
-    cv2.imshow("Captured Frame", frame)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
-else:
-    print("Failed to capture a frame from the camera.")
-```
-
 ## Contributing
-Please ensure your pull request adheres to the following guidelines:
 
-- Keep descriptions short and simple, but descriptive.
-- Check your spelling and grammar.
-- Make sure your code follows the style guide of this project.
-- Ensure your code does not generate any new warnings or errors.
+Please follow the guidelines below, use the `build.sh` script in the root directory to confirm all requirements are met.
 
-If you find a bug, kindly open an issue.
+### Code Style
 
-Any contributions you make will be under the GPL-3 License. In submitting a pull request, you agree to license your work under the same license.
+- We use `Black` for Python code formatting.
 
-For major changes, please open an issue first to discuss what you would like to change.
+### Linting
+
+- We use `pylint` for linting, with a score requirement.
+
+### Testing
+
+- Write tests for your new features or fixes and ensure they pass.
+- We use `pytest` for testing, with a coverage requirement.
+
+### Commit Messages
+
+Use the conventional commit format for all your commits. This helps in automating our release process and maintaining a clear history. A conventional commit message should look like this:
+
+```markdown
+<type>[optional scope]: <description>
+
+[optional body]
+
+[optional footer(s)]
+```
+
+Types include:
+
+```markdown
+- feat: Introduces a new feature to the project.
+- fix: Fixes a bug in the project.
+- docs: Changes to documentation only.
+- style: Code changes that do not affect the meaning (white-space, formatting, missing semi-colons, etc).
+- refactor: Code changes that neither fix a bug nor add a feature.
+- perf: Changes that improve performance.
+- test: Adding missing tests or correcting existing tests.
+- build: Updates to the build process.
+- chore: Changes to auxiliary tools and libraries such as documentation generation.
+```
+
+For more details, refer to the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) specification.
 
 ## License
-This project is licensed under the GPL-3 License - see the [LICENSE](LICENSE) file for details.
 
-## Docs
-![Viwer Class Chart](docs/Viewer/Viewer.png)
+This project is licensed under the GNU General Public License v3.0 - see the [LICENSE](LICENSE) file for details. GPL-3.0 is a free, copyleft license for software and other kinds of works, providing the freedom to run, study, share, and modify the software.
 
+For more details on the GPL-3.0 License, please refer to [gnu.org/licenses/gpl-3.0](https://www.gnu.org/licenses/gpl-3.0.html).
