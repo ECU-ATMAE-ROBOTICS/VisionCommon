@@ -1,174 +1,161 @@
-# Built-in
+"""
+This module provides the Viewer class for capturing and decoding
+barcodes and QR codes from video streams. It uses OpenCV for video capture
+and pyzbar for decoding.
+"""
+
 from time import time
 from warnings import warn
 from typing import Optional, Iterable
 
-# Third Party
 from cv2 import VideoCapture
 from numpy import ndarray
-from pyzbar.pyzbar import (  # Install the DLLS: https://pypi.org/project/pyzbar/
-    decode,
-    ZBarSymbol,
-)
+from pyzbar.pyzbar import decode, ZBarSymbol
 
-
-# Exceptions
-from .exceptions.InvalidCombinationException import InvalidCombinationException
+from .exceptions.invalid_combination_exception import InvalidCombinationException
 
 
 class Viewer:
-    def __init__(self, cameraIndex: int = 0) -> None:
-        """
-        Constructor for the Viewer class.
+    """Viewer for capturing and scanning frames"""
+
+    def __init__(self, camera_index: int = 0) -> None:
+        """Initialize the viewer with a specified camera index.
 
         Args:
-            cameraIndex (int, optional): The index of the camera to be used.
+            camera_index (int): Index of the camera. Defaults to 0.
         """
-        self.vid = VideoCapture(cameraIndex)
+        self.vid = VideoCapture(camera_index)
 
-    def captureCode(
+    def capture_code(
         self,
-        timeoutSec: int = None,
-        timeoutFrame: int = None,
-        codeTypes: Iterable[ZBarSymbol] = None,
+        timeout_sec: int = None,
+        timeout_frame: int = None,
+        code_types: Iterable[ZBarSymbol] = None,
     ) -> Optional[str]:
-        """
-        Capture codes from the camera based on the given timeout constraints.
+        """Captures codes based on timeout constraints.
 
         Args:
-            timeoutSec (int, optional): Maximum time to wait in seconds.
-            timeoutFrame (int, optional): Maximum number of frames to scan.
-            codeTypes (Iterable[ZBarSymbol], optional): The symbol types to decode.
+            timeout_sec (int, optional): Maximum time in seconds.
+            timeout_frame (int, optional): Maximum frame count.
+            code_types (Iterable[ZBarSymbol], optional): Types of codes to decode.
+
+        Raises:
+            ValueError: For negative timeouts.
+            InvalidCombinationException: If no timeout is set.
 
         Returns:
-            Optional[str]: The decoded content of the code if found, or None if no code is detected.
+            Optional[str]: Decoded content, or None.
         """
-
-        if (
-            (timeoutSec is not None)
-            and (timeoutSec < 0)
-            or ((timeoutFrame is not None) and (timeoutFrame < 0))
+        if (timeout_sec is not None and timeout_sec < 0) or (
+            timeout_frame is not None and timeout_frame < 0
         ):
             raise ValueError("Timeout cannot be negative")
 
-        if timeoutSec is None and timeoutFrame is None:
+        if timeout_sec is None and timeout_frame is None:
             raise InvalidCombinationException("One timeout must be set")
 
-        if timeoutSec is not None and timeoutFrame is not None:
-            return self._captureCodeByTimeoutBoth(timeoutSec, timeoutFrame, codeTypes)
+        if timeout_sec is not None and timeout_frame is not None:
+            return self._capture_code_by_timeout_both(
+                timeout_sec, timeout_frame, code_types
+            )
 
-        elif timeoutSec is not None:
-            return self._captureCodeByTimeoutSec(timeoutSec, codeTypes)
+        if timeout_sec is not None:
+            return self._capture_code_by_timeout_sec(timeout_sec, code_types)
 
-        elif timeoutFrame is not None:
-            return self._captureCodeByTimeoutFrame(timeoutFrame, codeTypes)
+        return self._capture_code_by_timeout_frame(timeout_frame, code_types)
 
-    def captureFrame(self) -> Optional[ndarray]:
-        """
-        Capture a single frame from the camera.
+    def capture_frame(self) -> Optional[ndarray]:
+        """Captures a single frame from the camera.
 
         Returns:
-            Optional[ndarray]: The NumPy array of the captured frame, or None if capture was not successful.
+            Optional[ndarray]: Captured frame, or None.
         """
         ret, frame = self.vid.read()
-        if ret:
-            return frame
-        else:
-            return None
+        return frame if ret else None
 
     def _scan(
-        self, frame: ndarray, codeTypes: Iterable[ZBarSymbol] = None
+        self, frame: ndarray, code_types: Iterable[ZBarSymbol] = None
     ) -> Optional[str]:
-        """
-        Scan a code from an image frame.
+        """Scans a code from a frame.
 
         Args:
-            frame (ndarray): A NumPy array representing the image frame containing a code.
-            codeTypes (Iterable[ZBarSymbol], optional): The symbol types to decode;
-                if None, uses ZBar's default behavior.
+            frame (ndarray): Image frame containing a code.
+            code_types (Iterable[ZBarSymbol], optional): Types to decode.
 
         Returns:
-            Optional[str]: The decoded content of the code if found, or None if no code is detected.
+            Optional[str]: Decoded content, or None.
         """
-        try:
-            value = decode(frame, codeTypes)
-            if not value:
-                return None
-        except Exception as e:
-            raise e
+        value = decode(frame, code_types)
+        return value[0].data.decode("utf-8") if value else None
 
-        decodedData = value[0].data.decode("utf-8")
-        return decodedData
-
-    def _captureCodeByTimeoutSec(
-        self, timeoutSec: int, codeTypes: Iterable[ZBarSymbol] = None
+    def _capture_code_by_timeout_sec(
+        self, timeout_sec: int, code_types: Iterable[ZBarSymbol] = None
     ) -> Optional[str]:
-        """
-        Capture codes from the camera based on the given time constraint.
+        """Captures codes based on time constraint.
 
         Args:
-            timeoutSec (int): Maximum time to wait in seconds.
+            timeout_sec (int): Time limit in seconds.
 
         Returns:
-            Optional[str]: The decoded content of the code if found, or None if no code is detected.
+            Optional[str]: Decoded content, or None.
         """
         warn("Using a busy-wait approach for timeouts can be resource-intensive")
-        startTime = time()
-        while (time() - startTime) < timeoutSec:
-            frame = self.captureFrame()
-            if frame.any():
-                decodedData = self._scan(frame, codeTypes)
-                if decodedData:
-                    return decodedData
+        start_time = time()
+        while (time() - start_time) < timeout_sec:
+            frame = self.capture_frame()
+            if frame is not None and frame.any():
+                decoded_data = self._scan(frame, code_types)
+                if decoded_data:
+                    return decoded_data
         return None
 
-    def _captureCodeByTimeoutFrame(
-        self, timeoutFrame: int, codeTypes: Iterable[ZBarSymbol] = None
+    def _capture_code_by_timeout_frame(
+        self, timeout_frame: int, code_types: Iterable[ZBarSymbol] = None
     ) -> Optional[str]:
-        """
-        Capture codes from the camera based on the given frame count constraint.
+        """Captures codes based on frame count.
 
         Args:
-            timeoutFrame (int): Maximum number of frames to scan.
+            timeout_frame (int): Frame count limit.
 
         Returns:
-            Optional[str]: The decoded content of the code if found, or None if no code is detected.
+            Optional[str]: Decoded content, or None.
         """
-        framesProcessed = 0
-        while framesProcessed < timeoutFrame:
-            frame = self.captureFrame()
-            if frame.any():
-                decodedData = self._scan(frame, codeTypes)
-                if decodedData:
-                    return decodedData
-            framesProcessed += 1
+        frames_processed = 0
+        while frames_processed < timeout_frame:
+            frame = self.capture_frame()
+            if frame is not None and frame.any():
+                decoded_data = self._scan(frame, code_types)
+                if decoded_data:
+                    return decoded_data
+            frames_processed += 1
         return None
 
-    def _captureCodeByTimeoutBoth(
-        self, timeoutSec: int, timeoutFrame: int, codeTypes: Iterable[ZBarSymbol] = None
+    def _capture_code_by_timeout_both(
+        self,
+        timeout_sec: int,
+        timeout_frame: int,
+        code_types: Iterable[ZBarSymbol] = None,
     ) -> Optional[str]:
-        """
-        Capture and decode data within specified time and frame limits.
+        """Captures and decodes data within time and frame limits.
 
         Args:
-            timeoutSec (int): Time limit in seconds for capturing and decoding data.
-            timeoutFrame (int): Frame limit for capturing and decoding data.
-            codeTypes (Iterable[ZBarSymbol], optional): Iterable of ZBarSymbol types to consider during decoding.
+            timeout_sec (int): Time limit in seconds.
+            timeout_frame (int): Frame count limit.
+            code_types (Iterable[ZBarSymbol], optional): Code types.
 
         Returns:
-            Optional[str]: Decoded data as a string if found within the specified limits, otherwise None.
-
-        Warnings:
-            This method uses a busy-wait approach for timeouts, which can be resource-intensive.
+            Optional[str]: Decoded content, or None.
         """
         warn("Using a busy-wait approach for timeouts can be resource-intensive")
-        startTime = time()
-        framesProcessed = 0
-        while (time() - startTime < timeoutSec) and (framesProcessed < timeoutFrame):
-            frame = self.captureFrame()
-            if frame.any():
-                decodedData = self._scan(frame, codeTypes)
-                if decodedData:
-                    return decodedData
-            framesProcessed += 1
+        start_time = time()
+        frames_processed = 0
+        while (time() - start_time < timeout_sec) and (
+            frames_processed < timeout_frame
+        ):
+            frame = self.capture_frame()
+            if frame is not None and frame.any():
+                decoded_data = self._scan(frame, code_types)
+                if decoded_data:
+                    return decoded_data
+            frames_processed += 1
         return None

@@ -1,3 +1,6 @@
+"""Exception for invalid parameter combinations"""
+
+
 class InvalidCombinationException(Exception):
     """Exception for when an invalid combination of arguments is passed"""
 
