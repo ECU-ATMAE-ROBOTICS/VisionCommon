@@ -40,3 +40,4 @@ sphinxcontrib-qthelp==1.0.7
 sphinxcontrib-serializinghtml==1.1.10
 tomlkit==0.12.5
 urllib3==2.2.1
+-e git+https://github.com/ECU-ATMAE-ROBOTICS/VisionCommon@575b5f8d240a137a162da28a3994996e819defa7#egg=VisionCommon
