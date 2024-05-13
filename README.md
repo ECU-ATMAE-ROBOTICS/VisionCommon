@@ -1,7 +1,7 @@
 # Vision Common
 
 ![build](https://github.com/ECU-ATMAE-ROBOTICS/VisionCommon/actions/workflows/ci.yml/badge.svg)
-![docs](https://github.com/ECU-ATMAE-ROBOTICS/VisionCommon/actions/workflows/static.yml/badge.svg)
+[![docs](https://github.com/ECU-ATMAE-ROBOTICS/VisionCommon/actions/workflows/static.yml/badge.svg)](https://ecu-atmae-robotics.github.io/VisionCommon/)
 [![linting: pylint](https://img.shields.io/badge/linting-pylint-yellowgreen)](https://github.com/pylint-dev/pylint)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
