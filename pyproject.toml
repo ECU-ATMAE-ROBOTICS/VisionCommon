@@ -21,6 +21,7 @@ exclude = '''
     \.git
   | \.venv
   | build
+  | docs
 )/
 '''
 
